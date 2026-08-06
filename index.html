@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAIL-GUARD AI | Edge Real-Time Railway Track Analytics Dashboard (SIH 2026)</title>
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+
+  <!-- Top Bar / Navigation Header -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-icon"><i class="fa-solid fa-train-subway"></i></div>
+      <div class="brand-text">
+        <h1>RAIL-GUARD <span>EDGE AI</span></h1>
+        <p>Indian Railways Real-Time Anomaly & Telemetry Control Center</p>
+      </div>
+    </div>
+
+    <div class="system-status">
+      <div class="status-indicator active">
+        <span class="pulse"></span>
+        <span class="text" id="node-status-text">EDGE NODE CONNECTED</span>
+      </div>
+      <div class="mode-badge"><i class="fa-solid fa-microchip"></i> Laptop Edge Inference (OpenCV + Python)</div>
+      <div class="time-display" id="live-clock">00:00:00 UTC</div>
+    </div>
+  </header>
+
+  <!-- Main Layout Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <ul class="nav-links">
+        <li class="nav-item active" data-tab="overview">
+          <a href="#overview"><i class="fa-solid fa-chart-line"></i> <span>Overview</span></a>
+        </li>
+        <li class="nav-item" data-tab="anomalies">
+          <a href="#anomalies">
+            <i class="fa-solid fa-triangle-exclamation"></i> 
+            <span>Anomaly Feed</span>
+            <span class="badge red" id="anomaly-badge-count">4</span>
+          </a>
+        </li>
+        <li class="nav-item" data-tab="telemetry">
+          <a href="#telemetry"><i class="fa-solid fa-gauge-high"></i> <span>Train Telemetry</span></a>
+        </li>
+        <li class="nav-item" data-tab="ai-copilot">
+          <a href="#ai-copilot"><i class="fa-solid fa-robot"></i> <span>AI Maintenance Copilot</span></a>
+        </li>
+        <li class="nav-item" data-tab="integration">
+          <a href="#integration"><i class="fa-solid fa-code-branch"></i> <span>Edge Integration Data</span></a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="voice-alert-toggle">
+          <label class="switch">
+            <input type="checkbox" id="voice-alert-checkbox" checked>
+            <span class="slider round"></span>
+          </label>
+          <span>Voice Alerts <i class="fa-solid fa-volume-high"></i></span>
+        </div>
+        <div class="team-credit">
+          <p><strong>SIH 2026 Winner Project</strong></p>
+          <p>Team Edge AI for Real-Time Analytics</p>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Views -->
+    <main class="content-area">
+      
+      <!-- TAB 1: EXECUTIVE OVERVIEW -->
+      <section id="tab-overview" class="tab-page active">
+        <div class="page-header">
+          <h2><i class="fa-solid fa-compass"></i> System Overview & Real-Time Status</h2>
+          <div class="actions">
+            <button class="btn btn-outline" id="btn-trigger-sim"><i class="fa-solid fa-bolt"></i> Simulate Defect Event</button>
+            <button class="btn btn-primary" onclick="exportOverviewReport()"><i class="fa-solid fa-download"></i> Export SIH Report</button>
+          </div>
+        </div>
+
+        <!-- KPI Metrics Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card cyan">
+            <div class="kpi-icon"><i class="fa-solid fa-road"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Track Distance Scanned</span>
+              <h3 class="kpi-value" id="val-scanned">1,482.5 <small>KM</small></h3>
+              <span class="kpi-trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +120 KM Today</span>
+            </div>
+          </div>
+
+          <div class="kpi-card red">
+            <div class="kpi-icon"><i class="fa-solid fa-burst"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Critical Track Anomalies</span>
+              <h3 class="kpi-value" id="val-defects">4</h3>
+              <span class="kpi-trend negative"><i class="fa-solid fa-triangle-exclamation"></i> Action Required</span>
+            </div>
+          </div>
+
+          <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-train"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Active Monitored Trains</span>
+              <h3 class="kpi-value">12</h3>
+              <span class="kpi-trend positive"><i class="fa-solid fa-check"></i> All Telemetry Synced</span>
+            </div>
+          </div>
+
+          <div class="kpi-card amber">
+            <div class="kpi-icon"><i class="fa-solid fa-shield-cat"></i></div>
+            <div class="kpi-info">
+              <span class="kpi-title">AI Derailment Risk Score</span>
+              <h3 class="kpi-value" id="val-risk">Low (14%)</h3>
+              <span class="kpi-trend warning"><i class="fa-solid fa-shield-halved"></i> Moderate on Section SR-4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Charts Row -->
+        <div class="dashboard-grid-2">
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-chart-area"></i> Real-Time Defect Frequency & Speed Profile</h3>
+              <span class="tag pulse-green">Live Sensor Stream</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="speedDefectChart"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-chart-pie"></i> Defect Type Distribution</h3>
+              <span class="tag">OpenCV Edge Classifier</span>
+            </div>
+            <div class="chart-container flex-center">
+              <canvas id="defectPieChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Anomaly Alert Ticker -->
+        <div class="glass-panel mt-20">
+          <div class="panel-header">
+            <h3><i class="fa-solid fa-bell-concierge"></i> Critical Alerts Needing Instant Dispatch</h3>
+            <a href="#anomalies" class="view-all-link" onclick="switchTab('anomalies')">View All Feed →</a>
+          </div>
+          <div class="recent-alerts-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Train No & Name</th>
+                  <th>Track ID</th>
+                  <th>KM Location</th>
+                  <th>Defect Type</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="overview-recent-table-body">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: ANOMALY FEED (LIVE EDGE CAPTURES) -->
+      <section id="tab-anomalies" class="tab-page">
+        <div class="page-header">
+          <h2><i class="fa-solid fa-triangle-exclamation"></i> Live Anomaly Stream & Edge Image Snaps</h2>
+          <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">All (4)</button>
+            <button class="filter-btn red" data-filter="CRITICAL">Critical (2)</button>
+            <button class="filter-btn amber" data-filter="WARNING">Warning (1)</button>
+            <button class="filter-btn green" data-filter="LOW">Low (1)</button>
+          </div>
+        </div>
+
+        <div class="anomaly-cards-grid" id="anomaly-cards-container">
+          <!-- Dynamically Populated Cards -->
+        </div>
+      </section>
+
+      <!-- TAB 3: TRAIN FLEET & TRACK TELEMETRY -->
+      <section id="tab-telemetry" class="tab-page">
+        <div class="page-header">
+          <h2><i class="fa-solid fa-gauge-high"></i> Railway Telemetry & Track Section Health</h2>
+        </div>
+
+        <div class="dashboard-grid-2">
+          <!-- Active Trains Status Table -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-train"></i> Live Monitored Trains</h3>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Train No</th>
+                  <th>Route</th>
+                  <th>Speed</th>
+                  <th>Current Zone</th>
+                  <th>Edge AI Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>12675</strong> (Cheran Exp)</td>
+                  <td>MAS → CBE</td>
+                  <td><span class="speed-badge normal">88 km/h</span></td>
+                  <td>Km 142.8 (SR-402)</td>
+                  <td><span class="badge red"><i class="fa-solid fa-triangle-exclamation"></i> Crack Alert</span></td>
+                </tr>
+                <tr>
+                  <td><strong>12007</strong> (Shatabdi Exp)</td>
+                  <td>MAS → MYS</td>
+                  <td><span class="speed-badge fast">110 km/h</span></td>
+                  <td>Km 89.2 (SR-201)</td>
+                  <td><span class="badge green"><i class="fa-solid fa-check"></i> Normal</span></td>
+                </tr>
+                <tr>
+                  <td><strong>16340</strong> (Nagercoil Exp)</td>
+                  <td>NCJ → CSMT</td>
+                  <td><span class="speed-badge normal">75 km/h</span></td>
+                  <td>Km 310.4 (SR-512)</td>
+                  <td><span class="badge amber"><i class="fa-solid fa-triangle-exclamation"></i> Fastener Wear</span></td>
+                </tr>
+                <tr>
+                  <td><strong>22625</strong> (Double Decker)</td>
+                  <td>SBC → MAS</td>
+                  <td><span class="speed-badge slow">45 km/h</span></td>
+                  <td>Km 12.0 (MAS-Yard)</td>
+                  <td><span class="badge green"><i class="fa-solid fa-check"></i> Normal</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Interactive Track Map Visualization -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-map-location-dot"></i> Geo-Heatmap & Track Condition Index</h3>
+            </div>
+            <div class="track-map-sim">
+              <div class="track-line">
+                <div class="track-node green" onclick="inspectNode('KM 100', 'Healthy Track', '0.2 mm wear', 'Normal')" title="KM 100 - Healthy">KM 100</div>
+                <div class="track-segment healthy"></div>
+                <div class="track-node red pulse-red-bg" onclick="inspectNode('KM 142.8', 'Transverse Crack', '4.2 mm break', 'CRITICAL')" title="KM 142.8 - CRITICAL CRACK DETECTED">KM 142.8</div>
+                <div class="track-segment warning"></div>
+                <div class="track-node amber" onclick="inspectNode('KM 180', 'Fastener Wear', 'Missing clip', 'WARNING')" title="KM 180 - Fastener Issue">KM 180</div>
+                <div class="track-segment healthy"></div>
+                <div class="track-node green" onclick="inspectNode('KM 220', 'Healthy Track', '0.1 mm wear', 'Normal')" title="KM 220 - Healthy">KM 220</div>
+              </div>
+              <div class="map-legend">
+                <span><i class="fa-solid fa-circle text-green"></i> Healthy Track</span>
+                <span><i class="fa-solid fa-circle text-amber"></i> Minor Wear / Warning</span>
+                <span><i class="fa-solid fa-circle text-red"></i> Critical Anomaly / Rail Fracture</span>
+              </div>
+              <div id="node-inspection-box" class="node-info-card">
+                <p>💡 <em>Click any track node above to inspect physical telemetry details!</em></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: AI COPILOT & PREDICTIVE MAINTENANCE -->
+      <section id="tab-ai-copilot" class="tab-page">
+        <div class="page-header">
+          <h2><i class="fa-solid fa-robot"></i> AI Control Room Copilot & Risk Engine</h2>
+        </div>
+
+        <div class="dashboard-grid-2">
+          <!-- Chatbot Assistant -->
+          <div class="glass-panel copilot-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-comments"></i> Natural Language Railway Copilot</h3>
+              <span class="tag blue">Gemini / GPT Edge Model</span>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages-container">
+              <div class="message assistant">
+                <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div class="msg-bubble">
+                  Hello Member 5! I am your AI Control Room Copilot. Ask me about track cracks, speed restriction rules (PSR), or emergency repair dispatches.
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-row">
+              <input type="text" id="chat-input-field" placeholder="Ask e.g. 'Show critical defects on Cheran Express route'..." onkeypress="handleChatKeyPress(event)">
+              <button class="btn btn-primary" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+
+            <div class="suggested-queries">
+              <button onclick="fillChatQuery('Summarize critical track cracks')">⚡ Critical Cracks Summary</button>
+              <button onclick="fillChatQuery('Calculate derailment risk for Train 12675')">⚠️ Derailment Risk Analysis</button>
+              <button onclick="fillChatQuery('Generate emergency repair ticket')">📝 Generate Repair Ticket</button>
+            </div>
+          </div>
+
+          <!-- Interactive AI Derailment Risk Matrix Calculator & Repair Ticket -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-calculator"></i> Interactive AI Derailment Risk Calculator</h3>
+            </div>
+            <div class="risk-calculator-form">
+              <div class="form-group">
+                <label>Train Speed: <strong id="val-calc-speed">88</strong> km/h</label>
+                <input type="range" id="slider-speed" min="20" max="140" value="88" oninput="calculateAIRisk()">
+              </div>
+              <div class="form-group">
+                <label>Crack Depth / Flaw Size: <strong id="val-calc-crack">4.2</strong> mm</label>
+                <input type="range" id="slider-crack" min="0" max="10" step="0.1" value="4.2" oninput="calculateAIRisk()">
+              </div>
+              
+              <div class="risk-result-box" id="risk-result-box">
+                <span>Calculated Derailment Probability:</span>
+                <h3 id="calc-risk-score" style="color:var(--accent-red)">78.4% (CRITICAL RISK)</h3>
+                <p id="calc-risk-action">Immediate Speed Restriction (PSR 20 km/h) Required!</p>
+              </div>
+            </div>
+
+            <div class="ticket-preview mt-20" id="ticket-preview-box">
+              <div class="ticket-header">
+                <h4><i class="fa-solid fa-shield-halved"></i> SOUTHERN RAILWAYS - EMERGENCY WORK ORDER</h4>
+                <span class="badge red">HIGH PRIORITY</span>
+              </div>
+              <div class="ticket-body">
+                <p><strong>Ticket ID:</strong> WO-2026-0805-442</p>
+                <p><strong>Defect Type:</strong> Major Longitudinal Rail Crack</p>
+                <p><strong>Location:</strong> Track ID SR-402B | KM 142.8 (MAS-CBE Line)</p>
+                <p><strong>Detected By:</strong> Train 12675 (Cheran Exp Edge Sensor)</p>
+                <p><strong>AI Recommended Action:</strong> Impose PSR of 20 km/h. Dispatch Gangman Team 4 with ultrasonic flaw detector.</p>
+              </div>
+              <div class="ticket-actions">
+                <button class="btn btn-primary" onclick="copyTicketToClipboard()"><i class="fa-solid fa-copy"></i> Copy Work Order</button>
+                <button class="btn btn-outline" onclick="alert('Work Order Dispatched to Section Engineer via SMS/Email API!')"><i class="fa-solid fa-share-nodes"></i> Dispatch to Field Team</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: EDGE DATA INTEGRATION (MEMBER 4 TO MEMBER 5) -->
+      <section id="tab-integration" class="tab-page">
+        <div class="page-header">
+          <h2><i class="fa-solid fa-code-branch"></i> Member 4 Edge Handoff & CSV Data Inspector</h2>
+        </div>
+
+        <div class="glass-panel">
+          <div class="panel-header">
+            <h3><i class="fa-solid fa-file-csv"></i> Live File Watcher: <code>anomalies.json</code></h3>
+            <span class="tag green"><i class="fa-solid fa-spin fa-rotate"></i> Auto-Syncing Every 2s</span>
+          </div>
+          <p class="description-text">This raw JSON telemetry payload is updated live on disk whenever Member 4's Python OpenCV script detects a track flaw on the laptop edge device.</p>
+
+          <div class="code-box">
+            <pre><code id="raw-json-inspector">
+[
+  {
+    "defect_id": "DEF-9041",
+    "timestamp": "2026-08-05 23:40:12",
+    "train_no": "12675",
+    "train_name": "Cheran Express",
+    "track_id": "TRK-SR-402B",
+    "km_mark": "142.8",
+    "speed_kmh": 88,
+    "gps_coords": "13.0827° N, 80.2707° E",
+    "defect_type": "Transverse Track Crack",
+    "severity": "CRITICAL",
+    "confidence": "96.4%",
+    "image_file": "crack_snap_9041.jpg"
+  }
+]
+            </code></pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Detail Inspection Modal Dialog -->
+  <div class="modal-backdrop" id="inspection-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-magnifying-glass"></i> Deep Anomaly Inspection</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body-content">
+        <!-- Dynamically Filled -->
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
